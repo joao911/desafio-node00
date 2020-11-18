@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 
-// const { v4: uuid, validate: isUuid } = require('uuid');
+const { v4: uuidv4} = require('uuid');
 
 const app = express();
 
@@ -11,32 +11,23 @@ app.use(cors());
 const repositories = [];
 
 app.get("/repositories", (request, response) => {
-  return response.json(repositories);
+  return response.status(200).json(repositories);
 });
 
 app.post("/repositories", (request, response) => {
   const {title, url, techs} = request.body 
 
-  const repository ={
-    id: uuid(),
-    title,
-    url,
-    techs,
-    likes:0
-  }
+  const repo ={id: uuidv4(), title, url, techs, likes:0}
 
-  if(!isUuid(repository.id)){
-    return response.status(400).json({error: 'id invalido'})
-  }
-  repositories.push(repository)
+  repositories.push(repo)
 
-  return response.json(repository)
+  return response.status(201).json(repository)
 });
 
 app.put("/repositories/:id", (request, response) => {
   const {id} = request.params
 
-  const result = repositories.findIndex(repository => repository.id === id)
+  const repoIndex = repositories.findIndex(repo => repo.id === id)
 
   if(result < 0){
     return response.status(400).json({error: 'id inválido'})
@@ -49,24 +40,24 @@ app.put("/repositories/:id", (request, response) => {
     title,
     url,
     techs,
-    likes: repositories[result].likes
+    likes: repositories[repoIndex].likes
   }
 
-  repositories[result] = repository
+  repositories[repoIndex] = repository
 
-  return response.json(repository)
+  return response.status(201).json(repo);
 });
 
 app.delete("/repositories/:id", (request, response) => {
   const {id} = request.params
 
-  const result = repositories.findIndex(repository => repository.id === id)
+  const repoIndex = repositories.findIndex(repository => repository.id === id)
 
-  if(result < 0){
+  if(repoIndex < 0){
     return response.status(400).json({error: 'id inválido'})
   }
 
-  repositories.splice(result,1)
+  repositories.splice(repoIndex,1)
 
   return response.status(204).send()
 });
@@ -74,15 +65,17 @@ app.delete("/repositories/:id", (request, response) => {
 app.post("/repositories/:id/like", (request, response) => {
   const {id} = request.params
 
-  const result = repositories.findIndex(repository => repository.id === id)
+  const repoIndex = repositories.findIndex(repo => repo.id == id);
 
-  if(result < 0){
-    return response.status(400).json({error: 'id inválido'})
+  if(repoIndex < 0) {
+    return response.status(400).json({
+      error: 'Repository not found to like'
+    });
   }
 
-  repositories[result].likes++
+  repositories[repoIndex].likes += 1;
 
-  return response.json( repositories[result])
+  return response.status(200).json({ likes: repositories[repoIndex].likes });
 });
 
 module.exports = app;
